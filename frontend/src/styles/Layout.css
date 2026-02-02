@@ -1,0 +1,50 @@
+/* Layout Structure */
+.layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: var(--dark-bg);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: var(--darker-bg);
+}
+
+/* Scrollbar Styling */
+.page-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.page-content::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+
+.page-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .page-content {
+    padding: 15px;
+  }
+}
