@@ -166,9 +166,7 @@ export default function Settings() {
     return (
       <div className="settings-page">
         <h1>Settings</h1>
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
-          Loading settings...
-        </div>
+        <Spinner />
       </div>
     );
   }
@@ -251,7 +249,7 @@ export default function Settings() {
                 <button className="btn-primary" onClick={handleSaveSettings} disabled={loading}>
                   {loading ? (
                     <>
-                      <Spinner size="small" variant="pulse" />
+                      <Spinner />
                       <span>Saving...</span>
                     </>
                   ) : (
@@ -329,6 +327,7 @@ export default function Settings() {
                       <option value="twitter">Twitter</option>
                       <option value="facebook">Facebook</option>
                       <option value="linkedin">LinkedIn</option>
+                      <option value="youtube">YouTube</option>
                     </select>
                   </div>
 
@@ -433,7 +432,7 @@ export default function Settings() {
                 <button className="btn-primary" onClick={handleSaveSettings} disabled={loading}>
                   {loading ? (
                     <>
-                      <Spinner size="small" variant="pulse" />
+                      <Spinner />
                       <span>Saving...</span>
                     </>
                   ) : (

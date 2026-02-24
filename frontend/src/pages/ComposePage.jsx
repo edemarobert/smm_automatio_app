@@ -16,6 +16,7 @@ export default function ComposePage() {
     twitter: false,
     facebook: true,
     linkedin: false,
+    youtube: false
   });
 
   const [scheduleDate, setScheduleDate] = useState('');
@@ -24,7 +25,9 @@ export default function ComposePage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [images, setImages] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [imageError, setImageError] = useState(null);
+  const [videoError, setVideoError] = useState(null);
 
   const handlePlatformChange = (platform) => {
     setPlatforms(prev => ({ ...prev, [platform]: !prev[platform] }));
@@ -67,9 +70,58 @@ export default function ComposePage() {
     }
   };
 
+  const handleVideoSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    setVideoError(null);
+
+    if (videos.length + files.length > 2) {
+      setVideoError('Maximum 2 videos allowed per post');
+      return;
+    }
+
+    files.forEach(file => {
+      if (!file.type.startsWith('video/')) {
+        setVideoError('Only video files are allowed');
+        return;
+      }
+
+      if (file.size > 100 * 1024 * 1024) { // 100MB for videos
+        setVideoError('Video size must be less than 100MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        // Create video element to get duration and thumbnail
+        const video = document.createElement('video');
+        video.onloadedmetadata = () => {
+          setVideos(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            data: event.target.result,
+            name: file.name,
+            file: file,
+            duration: Math.round(video.duration),
+            mimeType: file.type
+          }]);
+        };
+        video.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleRemoveImage = (imageId) => {
     setImages(prev => prev.filter(img => img.id !== imageId));
     setImageError(null);
+  };
+
+  const handleRemoveVideo = (videoId) => {
+    setVideos(prev => prev.filter(vid => vid.id !== videoId));
+    setVideoError(null);
   };
 
   const handlePost = async () => {
@@ -95,6 +147,7 @@ export default function ComposePage() {
         twitter: platforms.twitter,
         facebook: platforms.facebook,
         linkedin: platforms.linkedin,
+        youtube: platforms.youtube
       };
 
       const scheduledFor = scheduleDate && scheduleTime 
@@ -108,17 +161,22 @@ export default function ComposePage() {
       images.forEach(img => {
         formData.append('images', img.file);
       });
+      videos.forEach(vid => {
+        formData.append('videos', vid.file);
+      });
 
       await postsAPI.create(formData, token);
 
       setSuccess(true);
       setPost('');
       setImages([]);
+      setVideos([]);
       setPlatforms({
         instagram: true,
         twitter: false,
         facebook: true,
         linkedin: false,
+        youtube: false
       });
       setScheduleDate('');
       setScheduleTime('');
@@ -183,12 +241,40 @@ export default function ComposePage() {
               style={{ display: 'none' }}
               disabled={loading}
             />
+            
+            <button 
+              className="tool-btn video-btn" 
+              disabled={loading}
+              onClick={() => {
+                const input = document.getElementById('video-input');
+                input?.click();
+              }}
+            >
+              <ImageIcon size={20} />
+              <span>Add Video ({videos.length}/2)</span>
+            </button>
+            <input
+              id="video-input"
+              type="file"
+              multiple
+              accept="video/*"
+              onChange={handleVideoSelect}
+              style={{ display: 'none' }}
+              disabled={loading}
+            />
           </div>
 
           {imageError && (
             <div className="alert error-alert">
               <AlertCircle size={18} />
               <span>{imageError}</span>
+            </div>
+          )}
+
+          {videoError && (
+            <div className="alert error-alert">
+              <AlertCircle size={18} />
+              <span>{videoError}</span>
             </div>
           )}
 
@@ -208,6 +294,28 @@ export default function ComposePage() {
                       <X size={16} />
                     </button>
                     <span className="image-name">{img.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {videos.length > 0 && (
+            <div className="video-gallery">
+              <h4>Attached Videos ({videos.length}/2)</h4>
+              <div className="video-grid">
+                {videos.map((vid) => (
+                  <div key={vid.id} className="video-item">
+                    <video src={vid.data} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      className="remove-video"
+                      onClick={() => handleRemoveVideo(vid.id)}
+                      type="button"
+                      disabled={loading}
+                    >
+                      <X size={16} />
+                    </button>
+                    <span className="video-name">{vid.name} ({vid.duration}s)</span>
                   </div>
                 ))}
               </div>

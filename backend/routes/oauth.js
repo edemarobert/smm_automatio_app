@@ -354,4 +354,99 @@ router.post('/linkedin/callback', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * YouTube OAuth Routes
+ */
+
+router.get('/youtube/auth-url', (req, res) => {
+  try {
+    const scope = 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly';
+    const redirectUri = encodeURIComponent(process.env.YOUTUBE_CALLBACK_URL || 'http://localhost:5000/api/oauth/youtube/callback');
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.YOUTUBE_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+
+    res.json({ authUrl });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/youtube/callback', authenticateToken, async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ message: 'Authorization code is required' });
+    }
+
+    // Exchange code for tokens
+    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
+      code,
+      client_id: process.env.YOUTUBE_CLIENT_ID,
+      client_secret: process.env.YOUTUBE_CLIENT_SECRET,
+      redirect_uri: process.env.YOUTUBE_CALLBACK_URL || 'http://localhost:5000/api/oauth/youtube/callback',
+      grant_type: 'authorization_code'
+    });
+
+    const accessToken = tokenResponse.data.access_token;
+    const refreshToken = tokenResponse.data.refresh_token;
+
+    // Get YouTube channel info
+    const channelResponse = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+      params: {
+        part: 'snippet,statistics',
+        mine: true,
+        access_token: accessToken
+      }
+    });
+
+    const channel = channelResponse.data.items[0];
+    if (!channel) {
+      return res.status(400).json({ message: 'No YouTube channel found' });
+    }
+
+    // Check if account already exists
+    const existingAccount = await Account.findOne({
+      userId: req.user.userId,
+      platform: 'youtube'
+    });
+
+    const accountData = {
+      userId: req.user.userId,
+      platform: 'youtube',
+      accountName: channel.snippet.title,
+      accountHandle: channel.snippet.customUrl || channel.id,
+      accessToken,
+      refreshToken,
+      channelId: channel.id,
+      profileImage: channel.snippet.thumbnails?.default?.url || null,
+      followerCount: channel.statistics?.subscriberCount || 0,
+      isConnected: true
+    };
+
+    let account;
+    if (existingAccount) {
+      Object.assign(existingAccount, accountData);
+      account = await existingAccount.save();
+    } else {
+      account = await Account.create(accountData);
+    };
+
+    res.json({
+      message: 'YouTube channel connected successfully',
+      account: {
+        _id: account._id,
+        platform: account.platform,
+        accountName: account.accountName,
+        accountHandle: account.accountHandle,
+        followerCount: account.followerCount,
+        isConnected: true
+      }
+    });
+  } catch (error) {
+    console.error('YouTube OAuth error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

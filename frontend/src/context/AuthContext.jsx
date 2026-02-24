@@ -13,27 +13,29 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
+      const fetchUser = async () => {
+        try {
+          const response = await axios.get(`${API_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUser(response.data);
+          setError(null);
+        } catch (err) {
+          console.error('Failed to fetch user:', err);
+          setToken(null);
+          localStorage.removeItem('token');
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchUser();
+      
     } else {
       setLoading(false);
     }
   }, [token]);
 
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch user:', err);
-      setToken(null);
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const login = async (email, password) => {
     setLoading(true);
@@ -101,6 +103,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

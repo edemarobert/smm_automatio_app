@@ -12,21 +12,22 @@ export default function Calendar() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await postsAPI.getAll({ limit: 100 }, token);
+        setPosts(response.data.posts || []);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        setError('Failed to load posts');
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchPosts();
   }, [token]);
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      const response = await postsAPI.getAll({ limit: 100 }, token);
-      setPosts(response.data.posts || []);
-    } catch (err) {
-      console.error('Error fetching posts:', err);
-      setError('Failed to load posts');
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();

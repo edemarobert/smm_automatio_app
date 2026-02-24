@@ -27,6 +27,7 @@ export default function Header() {
       setUnreadCount(response.data?.count || 0);
     } catch (error) {
       setUnreadCount(0);
+      console.log(error)
     }
   }, [token]);
 
@@ -42,6 +43,7 @@ export default function Header() {
       setUnreadCount(unread);
     } catch (error) {
       setNotificationError('Failed to load notifications');
+      console.log(error)
     } finally {
       setLoadingNotifications(false);
     }
@@ -71,6 +73,7 @@ export default function Header() {
       setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       setNotificationError('Failed to update notification');
+      console.log(error)
     }
   };
 
@@ -82,6 +85,7 @@ export default function Header() {
       setUnreadCount(0);
     } catch (error) {
       setNotificationError('Failed to mark all as read');
+      console.log(error)
     }
   };
 

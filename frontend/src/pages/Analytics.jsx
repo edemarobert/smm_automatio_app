@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Eye, Share2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { analyticsAPI } from '../services/api';
 import '../styles/pages/Analytics.css';
+import Spinner from '../components/Spinner';
 
 export default function Analytics() {
   const { token } = useAuth();
@@ -14,38 +15,37 @@ export default function Analytics() {
   const [period, setPeriod] = useState('7d');
 
   useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+  
+        const [dashboardResponse, platformResponse, postsResponse] = await Promise.all([
+          analyticsAPI.getDashboardStats(token),
+          analyticsAPI.getPlatformStats(token),
+          analyticsAPI.getTopPosts({ limit: 5 }, token)
+        ]);
+  
+        setMetrics(dashboardResponse.data);
+        setPlatformStats(platformResponse.data);
+        setTopPosts(postsResponse.data);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setError('Failed to load analytics');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
     fetchAnalytics();
   }, [token, period]);
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [dashboardResponse, platformResponse, postsResponse] = await Promise.all([
-        analyticsAPI.getDashboardStats(token),
-        analyticsAPI.getPlatformStats(token),
-        analyticsAPI.getTopPosts({ limit: 5 }, token)
-      ]);
-
-      setMetrics(dashboardResponse.data);
-      setPlatformStats(platformResponse.data);
-      setTopPosts(postsResponse.data);
-    } catch (err) {
-      console.error('Error fetching analytics:', err);
-      setError('Failed to load analytics');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
   if (loading) {
     return (
       <div className="analytics-page">
         <h1>Analytics</h1>
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
-          Loading analytics...
-        </div>
+        <Spinner />
       </div>
     );
   }

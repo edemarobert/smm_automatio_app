@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Connect social media account
 router.post('/', authenticateToken, [
-  body('platform').isIn(['instagram', 'twitter', 'facebook', 'linkedin']).withMessage('Invalid platform'),
+  body('platform').isIn(['instagram', 'twitter', 'facebook', 'linkedin', 'youtube']).withMessage('Invalid platform'),
   body('accountName').trim().notEmpty().withMessage('Account name is required'),
   body('accountHandle').trim().notEmpty().withMessage('Account handle is required'),
   body('accessToken').notEmpty().withMessage('Access token is required')

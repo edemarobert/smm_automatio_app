@@ -11,23 +11,30 @@ import { publishPost } from '../services/socialMediaPublisher.js';
 
 const router = express.Router();
 
-// Configure multer for image uploads
+// Configure multer for image and video uploads
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedMimes.includes(file.mimetype)) {
+    const allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedVideoMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+    
+    if (file.fieldname === 'images' && allowedImageMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else if (file.fieldname === 'videos' && allowedVideoMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid image format'), false);
+      cb(new Error('Invalid file format'), false);
     }
   },
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB for videos
 });
 
 // Create post
-router.post('/', authenticateToken, upload.array('images', 4), [
+router.post('/', authenticateToken, upload.fields([
+  { name: 'images', maxCount: 4 },
+  { name: 'videos', maxCount: 2 }
+]), [
   body('content').trim().notEmpty().withMessage('Content is required'),
   body('platforms').notEmpty().withMessage('Select at least one platform')
 ], async (req, res) => {
@@ -49,10 +56,16 @@ router.post('/', authenticateToken, upload.array('images', 4), [
       }
     }
 
-    // Convert uploaded files to image objects with base64
-    const images = req.files ? req.files.map(file => ({
+    // Convert uploaded files to image/video objects with base64
+    const images = req.files?.images ? req.files.images.map(file => ({
       url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
       alt: file.originalname.split('.')[0]
+    })) : [];
+
+    const videos = req.files?.videos ? req.files.videos.map(file => ({
+      url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      mimeType: file.mimetype,
+      duration: 0 // Duration would be extracted from video metadata in production
     })) : [];
 
     const post = new Post({
@@ -60,6 +73,8 @@ router.post('/', authenticateToken, upload.array('images', 4), [
       content,
       platforms,
       images,
+      videos,
+      hasMedia: images.length > 0 || videos.length > 0,
       scheduledFor: scheduledFor || null,
       status: scheduledFor ? 'scheduled' : 'draft'
     });

@@ -8,7 +8,7 @@ const accountSchema = new mongoose.Schema({
   },
   platform: {
     type: String,
-    enum: ['instagram', 'twitter', 'facebook', 'linkedin'],
+    enum: ['instagram', 'twitter', 'facebook', 'linkedin', 'youtube'],
     required: true
   },
   accountName: {
@@ -51,6 +51,15 @@ const accountSchema = new mongoose.Schema({
   personUrn: {
     type: String,
     default: null // For LinkedIn profile URN
+  },
+  channelId: {
+    type: String,
+    default: null // For YouTube channel ID
+  },
+  videoPrivacy: {
+    type: String,
+    enum: ['public', 'private', 'unlisted'],
+    default: 'private' // Default to private for YouTube
   },
   isConnected: {
     type: Boolean,

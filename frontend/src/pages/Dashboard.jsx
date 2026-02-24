@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analyticsAPI, postsAPI } from '../services/api';
 import '../styles/pages/Dashboard.css';
+import Spinner from '../components/Spinner';
 
 export default function Dashboard() {
   const { isAuthenticated, token } = useAuth();
@@ -16,32 +17,33 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated && token) {
+      const fetchDashboardData = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+    
+          const statsResponse = await analyticsAPI.getDashboardStats(token);
+          setStats(statsResponse.data);
+    
+          const postsResponse = await postsAPI.getAll({ status: 'published', limit: 3 }, token);
+          setRecentPosts(postsResponse.data.posts || []);
+    
+          const scheduledResponse = await postsAPI.getAll({ status: 'scheduled', limit: 3 }, token);
+          setScheduledPosts(scheduledResponse.data.posts || []);
+        } catch (err) {
+          console.error('Error fetching dashboard data:', err);
+          setError('Failed to load dashboard data');
+        } finally {
+          setLoading(false);
+        }
+      }
       fetchDashboardData();
     } else {
       setLoading(false);
     }
   }, [isAuthenticated, token]);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const statsResponse = await analyticsAPI.getDashboardStats(token);
-      setStats(statsResponse.data);
-
-      const postsResponse = await postsAPI.getAll({ status: 'published', limit: 3 }, token);
-      setRecentPosts(postsResponse.data.posts || []);
-
-      const scheduledResponse = await postsAPI.getAll({ status: 'scheduled', limit: 3 }, token);
-      setScheduledPosts(scheduledResponse.data.posts || []);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  }
+  
 
   if (loading) {
     return (
@@ -51,7 +53,7 @@ export default function Dashboard() {
           <p>Loading your social media overview...</p>
         </div>
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
-          Loading data...
+          <Spinner />
         </div>
       </div>
     );

@@ -15,12 +15,23 @@ const postSchema = new mongoose.Schema({
     instagram: { type: Boolean, default: false },
     twitter: { type: Boolean, default: false },
     facebook: { type: Boolean, default: false },
-    linkedin: { type: Boolean, default: false }
+    linkedin: { type: Boolean, default: false },
+    youtube: { type: Boolean, default: false }
   },
   images: [{
     url: String,
     alt: String
   }],
+  videos: [{
+    url: String,
+    thumbnail: String,
+    duration: Number,
+    mimeType: String
+  }],
+  hasMedia: {
+    type: Boolean,
+    default: false
+  },
   status: {
     type: String,
     enum: ['draft', 'scheduled', 'published', 'failed'],

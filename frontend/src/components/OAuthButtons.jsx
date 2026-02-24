@@ -29,6 +29,10 @@ export default function OAuthButtons({ platform, onError, disabled }) {
           authUrl = liResponse.data.authUrl;
           break; 
         }
+        case 'youtube': { const ytResponse = await oauthAPI.getYouTubeAuthUrl();
+          authUrl = ytResponse.data.authUrl;
+          break; 
+        }
         default: {
             throw new Error('Unknown platform');
         }
@@ -58,6 +62,11 @@ export default function OAuthButtons({ platform, onError, disabled }) {
       label: 'Connect with LinkedIn',
       color: '#0A66C2',
       hoverColor: '#094899'
+    },
+    youtube: {
+      label: 'Connect with YouTube',
+      color: '#FF0000',
+      hoverColor: '#CC0000'
     }
   };
 

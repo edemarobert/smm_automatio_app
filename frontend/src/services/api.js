@@ -175,5 +175,15 @@ export const oauthAPI = {
   handleLinkedInCallback: (code, token) =>
     axios.post(`${API_URL}/oauth/linkedin/callback`, { code }, {
       headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  getYouTubeAuthUrl: (token) =>
+    axios.get(`${API_URL}/oauth/youtube/auth-url`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  handleYouTubeCallback: (code, token) =>
+    axios.post(`${API_URL}/oauth/youtube/callback`, { code }, {
+      headers: { Authorization: `Bearer ${token}` }
     })
 };
